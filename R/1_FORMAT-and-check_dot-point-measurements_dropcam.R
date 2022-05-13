@@ -166,19 +166,19 @@ relief.no.habitat <- qaqc.all %>%
 # Export errors to check back through and fix in 
 setwd(error.dir)
 
+# Save out habitat errors
 write.csv(habitat.missing.image.not.annotated,"habitat.missing.image.not.annotated.csv",row.names = FALSE) 
 write.csv(habitat.missing.annotation,"habitat.missing.annotation.csv",row.names = FALSE) 
 write.csv(habitat.missing.image,"habitat.missing.image.csv",row.names = FALSE) 
 write.csv(habitat.wrong.points,"habitat.wrong.points.csv",row.names = FALSE) 
+write.csv(relief.no.habitat,"relief.no.habitat.csv",row.names = FALSE) 
 
+# Save out relief errors
 write.csv(relief.missing.image.not.annotated,"relief.missing.image.not.annotated.csv",row.names = FALSE) 
 write.csv(relief.missing.annotation,"relief.missing.annotation.csv",row.names = FALSE) 
 write.csv(relief.missing.image,"relief.missing.image.csv",row.names = FALSE) 
 write.csv(relief.wrong.points,"relief.wrong.points.csv",row.names = FALSE) 
-
 write.csv(habitat.no.relief,"habitat.no.relief.csv",row.names = FALSE) 
-write.csv(relief.no.habitat,"relief.no.habitat.csv",row.names = FALSE) 
-
 
 ############                STOP     AND    READ      NEXT      PART        ############     
 ############                STOP     AND    READ      NEXT      PART        ############    
@@ -222,7 +222,6 @@ fov.percent.cover<-fov.points %>%
   dplyr::select(-c(fov.total.points.annotated))%>%
   glimpse()
 
-
 # Create broad point annotations ----
 broad.points <- habitat%>%
   dplyr::select(-c(fieldofview,morphology,type,relief))%>%
@@ -244,7 +243,6 @@ broad.percent.cover<-broad.points %>%
   mutate_at(vars(starts_with("broad")),funs(./broad.total.points.annotated*100))%>%
   dplyr::select(-c(broad.total.points.annotated))%>%
   glimpse()
-
 
 # Create  detailed point annotations ----
 detailed.points <- habitat%>%
