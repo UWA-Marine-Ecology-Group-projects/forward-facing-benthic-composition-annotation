@@ -1,6 +1,16 @@
-##### FORMATTING AND CHECKING HABITAT DATA FROM TRANSECT MEASURE ##### 
+### Error checks of habitat data and 
 
+## This script is designed to be used interatively to find basic annotation errors that should be made to original EventMeasure (.EMObs) or generic annotation files AND for subsequent data analysis.
 
+# NOTE: ERRORS SHOULD BE FIXED IN THE .TMObs AND THE SCRIPT RE-RAN!
+
+### OBJECTIVES ###
+# 1. Import data and run BASIC error reports
+# 2. Run more thorough checks on the data against the metadata and images in the original directory
+# 3. Tidy data into broad and detailed point-level and percent cover dataframes
+# 4. Export tidy datasets to a .csv format suitable for use in modelling and statistical testing 
+
+### Please forward any updates and improvements to tim.langlois@uwa.edu.au, claude.spencer@uwa.edu.au & brooke.gibbons@uwa.edu.au or raise an issue in the "forward-facing-benthic-composition-annotation" GitHub repository
 
 # Clear memory ----
 rm(list=ls())
@@ -25,13 +35,15 @@ study<-"2021-05_Abrolhos_stereo-BRUVs"  # enter your study name here
 ## Set your working directory ----
 working.dir <- getwd() # run this line for github projects, or type your working directory manually
 
-## Save these directory names to use later----
+## Save these directory names to use later ----
+# We recommend replicating our folder structure, however change directories here if you decide a different folder structure is more suitable for your project
 data.dir <- paste(working.dir,"data", sep="/") 
 raw.dir <- paste(data.dir,"raw", sep="/") 
 tidy.dir <- paste(data.dir,"tidy", sep="/")
 error.dir <- paste(data.dir,"errors to check", sep="/") 
 image.dir <- paste(data.dir, "images", sep = "/")
 
+# 1. Import data and run BASIC error reports
 # Read in the metadata----
 setwd(raw.dir)
 dir()
@@ -56,17 +68,10 @@ points <- read.delim("2021-05_Abrolhos_stereo-BRUVs_Forwards_Dot Point Measureme
   select(sample,image.row,image.col,broad,morphology,type,fieldofview) %>% # select only these columns to keep
   glimpse() # preview
 
-# basic check to manually assess the number of samples ----
-length(unique(points$sample)) # 50 samples
-
 # Check to see if you have samples with points extra or missing points annotated ----
-num.annotations <- points%>%
+num.annotations.habitat <- points%>%
   group_by(sample)%>%
   summarise(points.annotated=n()) # all have 20 points annotated
-
-# Check that the image names match the metadata samples -----
-missing.metadata.habitat <- anti_join(points,metadata, by = c("sample")) # samples in habitat that don't have a match in the metadata
-missing.habitat <- anti_join(metadata,points, by = c("sample")) # samples in the metadata that don't have a match in habitat
 
 # read in the relief gridded annotations ----
 relief <- read.delim("2021-05_Abrolhos_stereo-BRUVs_Forwards_Relief_Dot Point Measurements.txt",header=T,skip=4,stringsAsFactors=FALSE) %>% # read in the file
@@ -76,173 +81,126 @@ relief <- read.delim("2021-05_Abrolhos_stereo-BRUVs_Forwards_Relief_Dot Point Me
   select(sample,image.row,image.col,broad,morphology,type,fieldofview,relief) %>% # select only these columns to keep
   glimpse() # preview
 
-# basic check to manually assess the number of samples ----
-length(unique(relief$sample)) # 50 samples
-
 # Check to see if you have samples with points extra or missing points annotated ----
-num.annotations <- relief%>%
+num.annotations.relief <- relief%>%
   group_by(sample)%>%
   summarise(relief.annotated=n()) # all have 20 points annotated
 
-# Check that the image names match the metadata samples -----
-missing.metadata.relief <- anti_join(relief,metadata, by = c("sample")) # samples in habitat that don't have a match in the metadata
-missing.relief <- anti_join(metadata,relief, by = c("sample")) # samples in the metadata that don't have a match in habitat
-
-# Join the habitat and relief annotations
-habitat <- bind_rows(points, relief)
-
-##### CHECKING FOR MISSING IMAGE STUFF #####
+# 2. Run more thorough checks on the data against the metadata and images in the original directory
 # Point to images folders ----
-forwards.list <- dir(image.dir)%>%
+image.list <- dir(image.dir)%>%
   as.data.frame()%>%
-  rename(forwards.image.name=1)%>%
-  mutate(sample=str_replace_all(.$forwards.image.name,c(".png"="",".jpg"="",".JPG"="")))
+  rename(image.name=1)%>%
+  mutate(sample=str_replace_all(.$image.name,c(".png"="",".jpg"="",".JPG"="")))
 
-backwards.list <- dir(backwards.dir)%>%as.data.frame()%>%rename(backwards.image.name=1) %>%
-  dplyr::filter(!backwards.image.name %in%c("Thumbs.db")) %>%
-  mutate(sample=str_replace_all(.$backwards.image.name,c(".png"="",".jpg"="",".JPG"="")))
-
-# Create checking data frame ----
-qaqc.points <- metadata %>%
+# Create a data frame to check habitat annotations against using original metadata ----
+qaqc.habitat <- metadata %>%
   dplyr::select(sample, date) %>%
-  dplyr::left_join(forwards.list)%>%
-  dplyr::left_join(forwards.points.no.annotations)%>%
-  dplyr::left_join(backwards.list)%>%
-  dplyr::left_join(backwards.points.no.annotations)%>%
+  dplyr::left_join(image.list)%>%
+  dplyr::left_join(num.annotations.habitat)%>%
   glimpse()
 
-# Find samples where images and annotations are missing:
-forwards.points.missing.image.not.annotated <- qaqc.points%>%filter(forwards.image.name%in%c("NA",NA))%>%filter(forwards.points.no.annotations%in%c("NA",NA)) # ok because failed deployments
-backwards.points.missing.image.not.annotated <- qaqc.points%>%filter(backwards.image.name%in%c("NA",NA))%>%filter(backwards.points.no.annotations%in%c("NA",NA))
+# Habitat point annotation checking ----
+# Find samples where images and annotations are missing ----
+habitat.missing.image.not.annotated <- qaqc.habitat %>%
+  filter(image.name%in%c("NA",NA)) %>% 
+  filter(points.annotated %in% c("NA",NA))
 
-# Find samples where image is exported but missing annotations:
-forwards.points.missing.annotation <- qaqc.points%>%filter(!forwards.image.name%in%c("NA",NA))%>%filter(forwards.points.no.annotations%in%c("NA",NA))
-backwards.points.missing.annotation <- qaqc.points%>%filter(!backwards.image.name%in%c("NA",NA))%>%filter(backwards.points.no.annotations%in%c("NA",NA))
+# Find samples where image is exported but missing annotations ----
+habitat.missing.annotation <- qaqc.habitat %>%
+  filter(!image.name %in% c("NA",NA))%>%
+  filter(points.annotated %in% c("NA",NA))
 
-# Find samples annotated but missing images:
-forwards.points.missing.image <- qaqc.points%>%filter(forwards.image.name%in%c("NA",NA))%>%filter(!forwards.points.no.annotations%in%c("NA",NA))
-backwards.points.missing.image <- qaqc.points%>%filter(backwards.image.name%in%c("NA",NA))%>%filter(!backwards.points.no.annotations%in%c("NA",NA))
+# Find samples annotated but missing images ----
+habitat.missing.image <- qaqc.habitat %>%
+  filter(image.name %in% c("NA",NA)) %>%
+  filter(!points.annotated%in%c("NA",NA))
 
-setwd(error.dir)
-dir()
+# Find samples missing points, or with extra points annotated ----
+habitat.wrong.points <- num.annotations.habitat %>%
+  filter(points.annotated!= 20) # Change here for your number of points
 
-write.csv(qaqc.points, paste(study,"random-points","images-and-annotations-missing.csv",sep="_"),row.names=FALSE) 
-
-# read in grid annotations ----
-setwd(tm.export.dir)
-dir()
-
-habitat.forwards.grid <- read.delim("2020-06_south-west_stereo-BRUVs_grid_forwards_Dot Point Measurements.txt",header=T,skip=4,stringsAsFactors=FALSE) %>% # read in the file
-  ga.clean.names() %>% # tidy the column names using GlobalArchive function
-  mutate(sample=str_replace_all(.$filename,c(".png"="",".jpg"="",".JPG"=""," take 2"=""))) %>%
-  mutate(sample=as.character(sample)) %>% # in this example dataset, the samples are numerical
-  select(sample,image.row,image.col,broad,morphology,type,fieldofview,relief) %>% # select only these columns to keep
-  glimpse() # preview
-
-forwards.grid.no.annotations <- habitat.forwards.grid%>%
-  group_by(sample)%>%
-  summarise(forwards.grid.no.annotations=n()) # good
-
-habitat.backwards.grid <- read.delim("2020-06_south-west_stereo-BRUVs_grid_backwards_Dot Point Measurements.txt",header=T,skip=4,stringsAsFactors=FALSE) %>% # read in the file
-  ga.clean.names() %>% # tidy the column names using GlobalArchive function
-  mutate(sample=str_replace_all(.$filename,c(".png"="",".jpg"="",".JPG"="","1.1"="1","2.1"="2","3.1"="3","4.1"="4","5.1"="5","6.1"="6","7.1"="7","8.1"="8","9.1"="9","0.1"="0"))) %>%
-  mutate(sample=as.character(sample)) %>% # in this example dataset, the samples are numerical
-  select(sample,image.row,image.col,broad,morphology,type,fieldofview,relief) %>% # select only these columns to keep
-  mutate(sample=str_pad(sample,width = 2, side = "left", pad = "0")) %>%
-  glimpse() # preview
-
-backwards.grid.no.annotations <- habitat.backwards.grid%>%
-  group_by(sample)%>%
-  summarise(backwards.grid.no.annotations=n()) # good
-
-# Create checking dataframe ----
-qaqc.grid <- metadata %>%
+# Relief grid annotation checking
+# Create a data frame to check relief annotations against using original metadata ----
+qaqc.relief <- metadata %>%
   dplyr::select(sample, date) %>%
-  dplyr::left_join(forwards.list)%>%
-  dplyr::left_join(forwards.grid.no.annotations)%>%
-  dplyr::left_join(backwards.list)%>%
-  dplyr::left_join(backwards.grid.no.annotations)%>%
+  dplyr::left_join(image.list)%>%
+  dplyr::left_join(num.annotations.relief)%>%
   glimpse()
 
-# Find samples where images and annotations are missing:
-forwards.grid.missing.image.not.annotated <- qaqc.grid%>%filter(forwards.image.name%in%c("NA",NA))%>%filter(forwards.grid.no.annotations%in%c("NA",NA))
-backwards.grid.missing.image.not.annotated <- qaqc.grid%>%filter(backwards.image.name%in%c("NA",NA))%>%filter(backwards.grid.no.annotations%in%c("NA",NA))
+# Find samples where images and annotations are missing ----
+relief.missing.image.not.annotated <- qaqc.relief %>%
+  filter(image.name%in%c("NA",NA)) %>% 
+  filter(relief.annotated %in% c("NA",NA))
 
-# Find samples where image is exported but missing annotations:
-forwards.grid.missing.annotation <- qaqc.grid%>%filter(!forwards.image.name%in%c("NA",NA))%>%filter(forwards.grid.no.annotations%in%c("NA",NA))
-backwards.grid.missing.annotation <- qaqc.grid%>%filter(!backwards.image.name%in%c("NA",NA))%>%filter(backwards.grid.no.annotations%in%c("NA",NA))
+# Find samples where image is exported but missing annotations ----
+relief.missing.annotation <- qaqc.relief %>%
+  filter(!image.name %in% c("NA",NA))%>%
+  filter(relief.annotated %in% c("NA",NA))
 
-# Find samples annotated but missing images:
-forwards.grid.missing.image <- qaqc.grid%>%filter(forwards.image.name%in%c("NA",NA))%>%filter(!forwards.grid.no.annotations%in%c("NA",NA))
-backwards.grid.missing.image <- qaqc.grid%>%filter(backwards.image.name%in%c("NA",NA))%>%filter(!backwards.grid.no.annotations%in%c("NA",NA))
+# Find samples annotated but missing images ----
+relief.missing.image <- qaqc.relief %>%
+  filter(image.name %in% c("NA",NA)) %>%
+  filter(!relief.annotated%in%c("NA",NA))
 
-setwd(error.dir)
-dir()
-
-write.csv(qaqc.grid, paste(study,"grid","images-and-annotations-missing.csv",sep="_"),row.names=FALSE)  
+# Find samples missing points, or with extra points annotated ----
+relief.wrong.points <- num.annotations.relief %>%
+  filter(relief.annotated!= 20) # Change here for your number of points
 
 # Compare grids and random-points
 qaqc.all <- metadata %>%
   dplyr::select(sample, date) %>%
-  dplyr::left_join(forwards.list)%>%
-  dplyr::left_join(forwards.points.no.annotations)%>%
-  dplyr::left_join(forwards.grid.no.annotations)%>%
-  dplyr::left_join(backwards.list)%>%
-  dplyr::left_join(backwards.points.no.annotations)%>%
-  dplyr::left_join(backwards.grid.no.annotations)%>%
+  dplyr::left_join(image.list)%>%
+  dplyr::left_join(num.annotations.habitat)%>%
+  dplyr::left_join(num.annotations.relief)%>%
   glimpse()
 
-forwards.points.not.grid <- qaqc.all %>%
-  filter(!forwards.points.no.annotations%in%c("NA",NA))%>%
-  filter(forwards.grid.no.annotations%in%c("NA",NA)) # NONE = good
+habitat.no.relief <- qaqc.all %>%
+  filter(!points.annotated%in%c("NA",NA))%>%
+  filter(relief.annotated%in%c("NA",NA)) # NONE = good
 
-backwards.points.not.grid <- qaqc.all %>%
-  filter(!backwards.points.no.annotations%in%c("NA",NA))%>%
-  filter(backwards.grid.no.annotations%in%c("NA",NA)) # NONE = good
+relief.no.habitat <- qaqc.all %>%
+  filter(points.annotated%in%c("NA",NA))%>%
+  filter(!relief.annotated%in%c("NA",NA)) # NONE = good
 
-forwards.grid.not.points <- qaqc.all %>%
-  filter(forwards.points.no.annotations%in%c("NA",NA))%>%
-  filter(!forwards.grid.no.annotations%in%c("NA",NA)) # 2 = not good
+# Export errors to check back through and fix in 
+setwd(error.dir)
 
-backwards.grid.not.points <- qaqc.all %>%
-  filter(backwards.points.no.annotations%in%c("NA",NA))%>%
-  filter(!backwards.grid.no.annotations%in%c("NA",NA)) # 3 = not good
+write.csv(habitat.missing.image.not.annotated,"habitat.missing.image.not.annotated.csv",row.names = FALSE) 
+write.csv(habitat.missing.annotation,"habitat.missing.annotation.csv",row.names = FALSE) 
+write.csv(habitat.missing.image,"habitat.missing.image.csv",row.names = FALSE) 
+write.csv(habitat.wrong.points,"habitat.wrong.points.csv",row.names = FALSE) 
 
+write.csv(relief.missing.image.not.annotated,"relief.missing.image.not.annotated.csv",row.names = FALSE) 
+write.csv(relief.missing.annotation,"relief.missing.annotation.csv",row.names = FALSE) 
+write.csv(relief.missing.image,"relief.missing.image.csv",row.names = FALSE) 
+write.csv(relief.wrong.points,"relief.wrong.points.csv",row.names = FALSE) 
 
-### USE THIS ONLY ONCE ###
-setwd("C:/GitHub/SWC gits/mac-swc/data/raw/habitat checking")
-
-dir()
-
-labsheet <- read.csv("MEG_Labsheets_2021 - 2020-10_south-west_BOSS.csv")
-
-names(qaqc)
-
-annotated <- qaqc%>%
-  
-  dplyr::rename(forwards.habitat.forwards.exported = forwards.image.name)%>%
-  dplyr::rename(forwards.habitat.backwards.exported = backwards.image.name)%>%
-  
-  dplyr::rename(forwards.habitat.forwards.annotated = forwards.points.annotated)%>%
-  dplyr::rename(forwards.habitat.backwards.annotated = backwards.points.annotated)%>%
-  
-  dplyr::select(-c(date))%>%
-  
-  dplyr::mutate(forwards.habitat.forwards.exported = ifelse(!forwards.habitat.forwards.exported%in%c(NA),"Yes",NA)) %>%
-  dplyr::mutate(forwards.habitat.backwards.exported = ifelse(!forwards.habitat.backwards.exported%in%c(NA),"Yes",NA)) %>%
-  
-  dplyr::mutate(forwards.habitat.forwards.annotated = ifelse(!forwards.habitat.forwards.annotated%in%c(NA),"Yes",NA)) %>%
-  dplyr::mutate(forwards.habitat.backwards.annotated = ifelse(!forwards.habitat.backwards.annotated%in%c(NA),"Yes",NA)) %>%
-  
-  dplyr::rename(Sample = sample) %>%
-  
-  glimpse()
+write.csv(habitat.no.relief,"habitat.no.relief.csv",row.names = FALSE) 
+write.csv(relief.no.habitat,"relief.no.habitat.csv",row.names = FALSE) 
 
 
-join <- left_join(labsheet,annotated)  
+############                STOP     AND    READ      NEXT      PART        ############     
+############                STOP     AND    READ      NEXT      PART        ############    
+############                STOP     AND    READ      NEXT      PART        ############    
+############                STOP     AND    READ      NEXT      PART        ############    
+############                STOP     AND    READ      NEXT      PART        ############    
+############                STOP     AND    READ      NEXT      PART        ############    
+############                STOP     AND    READ      NEXT      PART        ############    
+############                STOP     AND    READ      NEXT      PART        ############    
+############                STOP     AND    READ      NEXT      PART        ############    
+############                STOP     AND    READ      NEXT      PART        ############    
+############                STOP     AND    READ      NEXT      PART        ############    
+############                STOP     AND    READ      NEXT      PART        ############    
+############                STOP     AND    READ      NEXT      PART        ############    
+############                STOP     AND    READ      NEXT      PART        ############    
 
-write.csv(join,"new-labsheet.csv",row.names = FALSE)
+# We strongly encourage you to fix these errors at the source (i.e. TMObs).
+# NOW check through the files in your "Errors to check" folder and make corrections to .TMObs / generic files and then re-run this script.
 
+# 3. Tidy data into broad and detailed point-level and percent cover dataframes
+# Join the habitat and relief annotations
+habitat <- bind_rows(points, relief)
 
 # Create %fov----
 fov.points <- habitat%>%
@@ -331,7 +289,7 @@ relief.grid<-habitat%>%
   dplyr::ungroup()%>%
   glimpse()
 
-
+# 4. Export tidy datasets to a .csv format suitable for use in modelling and statistical testing 
 # Write final habitat data----
 setwd(tidy.dir)
 dir()
@@ -356,9 +314,13 @@ habitat.detailed.percent <- metadata%>%
   left_join(detailed.percent.cover, by = "sample")%>%
   left_join(relief.grid)
 
+# Export point-annotations
 write.csv(habitat.broad.points,file=paste(study,"random-points_broad.habitat.csv",sep = "_"), row.names=FALSE)
 write.csv(habitat.detailed.points,file=paste(study,"random-points_detailed.habitat.csv",sep = "_"), row.names=FALSE)
 
-
+# Export percent cover annotations
 write.csv(habitat.broad.percent,file=paste(study,"random-points_percent-cover_broad.habitat.csv",sep = "_"), row.names=FALSE)
 write.csv(habitat.detailed.percent,file=paste(study,"random-points_percent-cover_detailed.habitat.csv",sep = "_"), row.names=FALSE)
+
+
+
