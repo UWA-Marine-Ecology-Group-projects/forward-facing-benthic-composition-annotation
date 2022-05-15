@@ -30,7 +30,7 @@ library(readr)
 library(ggplot2)
 
 # Study name 
-study       <-"2021-05_Abrolhos_stereo-BRUVs"  # Enter your study name here for saving tidy data later
+study <- "2021-05_Abrolhos_stereo-BRUVs"  # Enter your study name here for saving tidy data later
 
 # Set your working directory 
 working.dir <- getwd() # Run this line for github projects, or type your working directory manually
@@ -38,11 +38,11 @@ working.dir <- getwd() # Run this line for github projects, or type your working
 # Save these directory names to use later
 # We recommend replicating our folder structure, however change directories here if you decide a different folder structure is more suitable for your project
 # The recommended folder structure uses a data directory within the main directory, which contains multiple sub-folders for raw data, the original annotation images, errors to check and the final tidy data
-data.dir    <- paste(working.dir,"data", sep="/") 
-raw.dir     <- paste(data.dir,"raw", sep="/") 
-tidy.dir    <- paste(data.dir,"tidy", sep="/")
-error.dir   <- paste(data.dir,"errors to check", sep="/") 
-image.dir   <- paste(data.dir, "images", sep = "/")
+data.dir  <- paste(working.dir,"data", sep="/") 
+raw.dir   <- paste(data.dir,"raw", sep="/") 
+tidy.dir  <- paste(data.dir,"tidy", sep="/")
+error.dir <- paste(data.dir,"errors to check", sep="/") 
+image.dir <- paste(data.dir, "images", sep = "/")
 
 ### 1. Import data and run BASIC error reports ----
 # Read in the metadata
@@ -50,21 +50,21 @@ setwd(raw.dir)
 dir()
 
 # Read in metadata
-metadata  <- read_csv("2021-05_Abrolhos_stereo-BRUVs_Metadata.csv") %>% # Read in the file
+metadata  <- read_csv(paste0(study, "_Metadata.csv")) %>% # Read in the file
              ga.clean.names() %>% # Tidy the column names using GlobalArchive function 
              dplyr::select(sample, latitude, longitude, date, site, location, successful.count) %>% # Select only these columns to keep
-             # mutate(sample=as.character(sample)) %>% # Turn on if you have numerical sample names
+             # mutate(sample=as.character(sample)) %>% # Turn this line on if you have numerical sample names
              glimpse() # Preview the data
 
 # Read in the raw habitat data
 dir()
 
 # read in the benthic composition points annotations
-points <- read.delim("2021-05_Abrolhos_stereo-BRUVs_Forwards_Dot Point Measurements.txt",header=T,skip=4,stringsAsFactors=FALSE) %>% # Read in the file
-          ga.clean.names() %>% # tidy the column names using GlobalArchive function
-          mutate(sample=str_replace_all(.$filename,c(".png"="",".jpg"="",".JPG"=""))) %>%
+points <- read.delim(paste0(study, "_Dot Point Measurements.txt"),header=T,skip=4,stringsAsFactors=FALSE) %>% # Read in the file
+          ga.clean.names() %>% # Tidy the column names using GlobalArchive function
+          mutate(sample=str_replace_all(.$filename,c(".png"="",".jpg"="",".JPG"=""))) %>% # Removes file extensions from sample names
           # mutate(sample=as.character(sample)) %>% # Turn on if you have numerical sample names
-          select(sample,image.row,image.col,broad,morphology,type,fieldofview) %>% # select only these columns to keep
+          select(sample,image.row,image.col,broad,morphology,type,fieldofview) %>% # s elect only these columns to keep
           glimpse() # preview
 
 # Check to see if you have samples with points extra or missing points annotated
@@ -73,16 +73,16 @@ num.annotations.habitat <- points%>%
                            summarise(points.annotated=n()) # all have 20 points annotated
 
 # read in the relief gridded annotations
-relief <- read.delim("2021-05_Abrolhos_stereo-BRUVs_Forwards_Relief_Dot Point Measurements.txt",header=T,skip=4,stringsAsFactors=FALSE) %>% # Read in the file
+relief <- read.delim(paste0(study, "_Relief_Dot Point Measurements.txt"),header=T,skip=4,stringsAsFactors=FALSE) %>% # Read in the file
           ga.clean.names() %>% # Tidy the column names using GlobalArchive function
-          mutate(sample=str_replace_all(.$filename,c(".png"="",".jpg"="",".JPG"=""))) %>%
+          mutate(sample=str_replace_all(.$filename,c(".png"="",".jpg"="",".JPG"=""))) %>% # Removes file extensions from sample names
           # mutate(sample=as.character(sample)) %>% # Turn on if you have numerical sample names
-          select(sample,image.row,image.col,broad,morphology,type,fieldofview,relief) %>% # select only these columns to keep
-          glimpse() # preview
+          select(sample,image.row,image.col,broad,morphology,type,fieldofview,relief) %>% # Select only these columns to keep
+          glimpse() # Preview
 
 # Check to see if you have samples with points extra or missing points annotated
-num.annotations.relief  <- relief%>%
-                           group_by(sample)%>%
+num.annotations.relief  <- relief %>%
+                           group_by(sample) %>%
                            summarise(relief.annotated=n()) # All have 20 points annotated
 
 ### 2. Run more thorough checks on the data against the metadata and images in the original directory ----
@@ -155,11 +155,12 @@ qaqc.all <- metadata %>%
             left_join(num.annotations.relief)%>%
             glimpse()
 
-# 
+# Find samples that have been annotated for habitat but not for relief 
 habitat.no.relief <- qaqc.all %>%
                      filter(!points.annotated%in%c("NA",NA))%>%
                      filter(relief.annotated%in%c("NA",NA)) # NONE = good
 
+# Find samples that have been annotated for relief but not for habitat
 relief.no.habitat <- qaqc.all %>%
                      filter(points.annotated%in%c("NA",NA))%>%
                      filter(!relief.annotated%in%c("NA",NA)) # NONE = good
@@ -181,7 +182,7 @@ write.csv(relief.missing.image,"relief.missing.image.csv",row.names = FALSE)
 write.csv(relief.wrong.points,"relief.wrong.points.csv",row.names = FALSE) 
 write.csv(habitat.no.relief,"habitat.no.relief.csv",row.names = FALSE) 
 
-###   STOP     AND    READ      NEXT      PART     ###     
+###   STOP     AND    READ      THE     NEXT      PART     ###     
 
 # We strongly encourage you to fix these errors at the source (i.e. TMObs).
 # NOW check through the files in your "Errors to check" folder and make corrections to .TMObs / generic files and then re-run this script.
@@ -191,7 +192,7 @@ write.csv(habitat.no.relief,"habitat.no.relief.csv",row.names = FALSE)
 habitat <- bind_rows(points, relief)
 
 # Create %fov
-fov.points <- habitat%>%
+fov.points <- habitat %>%
               select(-c(broad,morphology,type,relief))%>%
               filter(!fieldofview=="")%>%
               filter(!is.na(fieldofview))%>%
