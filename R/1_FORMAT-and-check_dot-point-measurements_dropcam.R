@@ -8,7 +8,9 @@
 # 1. Import data and run BASIC error reports
 # 2. Run more thorough checks on the data against the metadata and images in the original directory
 # 3. Tidy data into broad and detailed point-level and percent cover dataframes
-# 4. Export tidy datasets to a .csv format suitable for use in modelling and statistical testing 
+# 4. Tidy the final data into organised dataframes
+# 5. Visualise the final data and visually inspect for any final errors
+# 6. Export tidy datasets to a .csv format suitable for use in modelling and statistical testing
 
 # Please forward any updates and improvements to tim.langlois@uwa.edu.au, claude.spencer@uwa.edu.au & brooke.gibbons@uwa.edu.au or raise an issue in the "forward-facing-benthic-composition-annotation" GitHub repository
 
@@ -27,10 +29,13 @@ library(plyr)
 library(dplyr)
 library(stringr)
 library(readr)
+
+# To visualise data
 library(ggplot2)
+library(ggbeeswarm)
 
 # Study name 
-study <- "2021-05_Abrolhos_stereo-BRUVs"  # Enter your study name here for saving tidy data later
+study <- "2021-05_Abrolhos_stereo-BRUVs"  # Enter your study name/campaign ID here for saving tidy data 
 
 # Set your working directory 
 working.dir <- getwd() # Run this line for github projects, or type your working directory manually
@@ -43,6 +48,7 @@ raw.dir   <- paste(data.dir,"raw", sep="/")
 tidy.dir  <- paste(data.dir,"tidy", sep="/")
 error.dir <- paste(data.dir,"errors to check", sep="/") 
 image.dir <- paste(data.dir, "images", sep = "/")
+plot.dir  <- paste(working.dir, "plots", sep = "/")
 
 ### 1. Import data and run BASIC error reports ----
 # Read in the metadata
@@ -86,16 +92,16 @@ num.annotations.relief  <- relief %>%
 
 ### 2. Run more thorough checks on the data against the metadata and images in the original directory ----
 # Point to images folders
-image.list <- dir(image.dir)%>% # Selects the directory where your habitat images are stored
-              as.data.frame()%>%
-              rename(image.name=1)%>% 
+image.list <- dir(image.dir) %>% # Selects the directory where your habitat images are stored
+              as.data.frame() %>%
+              rename(image.name=1) %>% 
               mutate(sample=str_replace_all(.$image.name,c(".png"="",".jpg"="",".JPG"=""))) # Removes file extensions from image names
 
 # Create a data frame to check habitat annotations against using original metadata
 qaqc.habitat <- metadata %>%
                 dplyr::select(sample, date) %>%
-                dplyr::left_join(image.list)%>% # Joins sample and date from metadata with the list of images
-                dplyr::left_join(num.annotations.habitat)%>% # And the number of annotations per image
+                dplyr::left_join(image.list) %>% # Joins sample and date from metadata with the list of images
+                dplyr::left_join(num.annotations.habitat) %>% # And the number of annotations per image
                 glimpse()
 
 # Habitat point annotation checking
@@ -206,7 +212,7 @@ fov.points <- habitat %>%
 
 fov.percent.cover <- fov.points %>%
                      group_by(sample)%>%
-                     mutate_at(vars(starts_with("fov")),funs(./fov.total.points.annotated*100))%>%
+                     mutate_at(vars(starts_with("fov")),list(~./fov.total.points.annotated*100))%>%
                      select(-c(fov.total.points.annotated))%>%
                      glimpse()
 
@@ -220,16 +226,16 @@ broad.points <- habitat%>%
                 spread(key=broad,value=count,fill=0)%>%
                 select(-c(image.row,image.col))%>%
                 group_by(sample)%>%
-                summarise_all(funs(sum))%>%
-                mutate(broad.total.points.annotated=rowSums(.[,2:(ncol(.))],na.rm = TRUE ))%>%
+                summarise_all(list(sum))%>%
+                mutate(total.points.annotated=rowSums(.[,2:(ncol(.))],na.rm = TRUE ))%>%
                 ga.clean.names()%>%
                 glimpse()
 
 # Create broad percent cover
 broad.percent.cover <- broad.points %>%
                        group_by(sample)%>%
-                       mutate_at(vars(starts_with("broad")),funs(./broad.total.points.annotated*100))%>%
-                       dplyr::select(-c(broad.total.points.annotated))%>%
+                       mutate_at(vars(starts_with("broad")),list(~./total.points.annotated*100))%>%
+                       dplyr::select(-c(total.points.annotated))%>%
                        glimpse()
 
 # Create  detailed point annotations
@@ -245,16 +251,16 @@ detailed.points <- habitat%>%
                    spread(key=morphology,value=count,fill=0)%>%
                    select(-c(image.row,image.col))%>%
                    group_by(sample)%>%
-                   summarise_all(funs(sum))%>%
-                   mutate(detailed.total.points.annotated=rowSums(.[,2:(ncol(.))],na.rm = TRUE ))%>%
+                   summarise_all(list(sum))%>%
+                   mutate(total.points.annotated=rowSums(.[,2:(ncol(.))],na.rm = TRUE ))%>%
                    ga.clean.names()%>%
                    glimpse()
 
 # Create detailed percent cover
 detailed.percent.cover <- detailed.points %>%
                           group_by(sample)%>%
-                          mutate_at(vars(starts_with("detailed")),funs(./detailed.total.points.annotated*100))%>%
-                          select(-c(detailed.total.points.annotated))%>%
+                          mutate_at(vars(starts_with("detailed")),list(~./total.points.annotated*100))%>%
+                          select(-c(total.points.annotated))%>%
                           glimpse()
 
 # Create relief
@@ -275,10 +281,7 @@ relief.grid <- habitat%>%
                ungroup()%>%
                glimpse()
 
-### 4. Export tidy datasets to a .csv format suitable for use in modelling and statistical testing ----
-# Write final habitat data
-setwd(tidy.dir)
-dir()
+### 4. Tidy the final data into organised dataframes ----
 
 habitat.broad.points <- metadata%>%
                         left_join(fov.points, by = "sample")%>%
@@ -300,7 +303,69 @@ habitat.detailed.percent <- metadata%>%
                             left_join(detailed.percent.cover, by = "sample")%>%
                             left_join(relief.grid)
 
-# Export point-annotations
+### 5. Visualise the final data and visually inspect for any final errors ----
+# Typical errors found could include samples with 
+
+# Broad point annotations
+broad.hab.plot <- habitat.broad.points %>%
+  pivot_longer(cols = starts_with("broad"),names_to = "biota", values_to = "num.points") %>%
+  glimpse()
+
+broad.rel.plot <- relief %>%
+  mutate(relief.rank=ifelse(relief==".0. Flat substrate, sandy, rubble with few features. ~0 substrate slope.",0,
+                     ifelse(relief==".1. Some relief features amongst mostly flat substrate/sand/rubble. <45 degree substrate slope.",1,
+                     ifelse(relief==".2. Mostly relief features amongst some flat substrate or rubble. ~45 substrate slope.",2,
+                     ifelse(relief==".3. Good relief structure with some overhangs. >45 substrate slope.",3,
+                     ifelse(relief==".4. High structural complexity, fissures and caves. Vertical wall. ~90 substrate slope.",4,
+                     ifelse(relief==".5. Exceptional structural complexity, numerous large holes and caves. Vertical wall. ~90 substrate slope.",5,relief))))))) %>%
+  dplyr::filter(!relief.rank%in%"") %>%
+  dplyr::mutate(num.points = 1) %>%
+  dplyr::group_by(sample, relief.rank) %>%
+  dplyr::summarise(num.points = sum(num.points)) %>%
+  glimpse()
+
+gg.broad.hab <- ggplot() +
+  geom_quasirandom(data = broad.hab.plot,
+                   aes(x = num.points, y = biota), groupOnX = F, method = "quasirandom",
+                   alpha = 0.25, size = 1.8, width = 0.2) +
+  labs(x = "Number of points", y = "") +
+  theme_classic()
+gg.broad.hab
+
+# Relief
+gg.relief <- ggplot() +
+  geom_quasirandom(data = broad.rel.plot,
+                   aes(x = num.points, y = relief.rank), groupOnX = F, method = "quasirandom",
+                   alpha = 0.25, size = 1.8, width = 0.2) +
+  labs(x = "Number of points", y = "Relief (0-5)") +
+  theme_classic()
+gg.relief
+
+# Detailed point annotations
+detailed.dat.plot <- habitat.detailed.points %>%
+  pivot_longer(cols = starts_with("detailed"),names_to = "biota", values_to = "num.points") %>%
+  glimpse()
+
+gg.detailed.hab <- ggplot() +
+  geom_quasirandom(data = detailed.dat.plot%>%filter(!biota%in%c("sd.relief","mean.relief")),
+                   aes(x = num.points, y = biota), groupOnX = F, method = "quasirandom",
+                   alpha = 0.5, size = 1.8) +
+  labs(x = "Number of points", y = "") +
+  theme_classic()
+gg.detailed.hab
+
+# Save plots
+setwd(plot.dir)
+
+ggsave("broad.habitat.png",gg.broad.hab,dpi=600,width=6.0, height = 6.0)
+ggsave("relief.png",gg.relief,dpi=600,width=6.0, height = 6.0)
+ggsave("detailed.habitat.png",gg.detailed.hab,dpi=600,width=8.0, height = 6.0)
+
+### 6. Export tidy datasets to a .csv format suitable for use in modelling and statistical testing ----
+# Export point- annotations
+setwd(tidy.dir)
+dir()
+
 write.csv(habitat.broad.points,file=paste(study,"random-points_broad.habitat.csv",sep = "_"), row.names=FALSE)
 write.csv(habitat.detailed.points,file=paste(study,"random-points_detailed.habitat.csv",sep = "_"), row.names=FALSE)
 
@@ -309,4 +374,4 @@ write.csv(habitat.broad.percent,file=paste(study,"random-points_percent-cover_br
 write.csv(habitat.detailed.percent,file=paste(study,"random-points_percent-cover_detailed.habitat.csv",sep = "_"), row.names=FALSE)
 
 
-
+setwd(working.dir)
