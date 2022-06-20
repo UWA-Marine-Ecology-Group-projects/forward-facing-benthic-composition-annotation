@@ -38,7 +38,7 @@ library(ggbeeswarm)
 study <- "2021-05_Abrolhos_stereo-BRUVs"  # Enter your study name (campaign ID) here for naming of tidy data 
 
 # Set your working directory 
-setwd(getwd()) # Run this line for GitHub projects, or type your working directory manually
+setwd(getwd()) # Run this line for GitHub projects, or set your working directory manually
 
 ### 1. Import data and run basic error reports ----
 # Read in metadata
@@ -110,7 +110,7 @@ habitat.missing.image <- qaqc.habitat %>%
 
 # Find samples missing points, or with extra points annotated
 habitat.wrong.points <- num.annotations.habitat %>%
-                        filter(points.annotated!= 20) # Change here for your number of points
+                        filter(points.annotated!= 20) # Change here for your number of points (20 for single images, 80 for composite imagery)
 
 # Relief grid annotation checking
 # Create a data frame to check relief annotations against using original metadata
