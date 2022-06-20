@@ -1,6 +1,6 @@
-# Error checking of stereo-BRUV habitat data exported from TransectMeasure ----
+# Error checking of panoramic drop camera habitat data exported from TransectMeasure ----
 
-# This script is designed to be used interatively to find basic annotation errors that should be made to original EventMeasure (.EMObs) or generic annotation files AND for subsequent data analysis.
+# This script is designed to be used interactively to find basic annotation errors that should be made to original EventMeasure (.EMObs) or generic annotation files AND for subsequent data analysis.
 
 # NOTE: ERRORS SHOULD BE FIXED IN THE .TMObs AND THE SCRIPT RE-RAN!
 
@@ -12,7 +12,7 @@
 # 5. Visualise the final data and visually inspect for data trends and final errors
 # 6. Export tidy datasets to a .csv format suitable for use in modelling and statistical testing
 
-# Please forward any updates and improvements to tim.langlois@uwa.edu.au, claude.spencer@uwa.edu.au & brooke.gibbons@uwa.edu.au or raise an issue in the "forward-facing-benthic-composition-annotation" GitHub repository
+# Please forward any updates and improvements to tim.langlois@uwa.edu.au & claude.spencer@uwa.edu.au or raise an issue in the "forward-facing-benthic-composition-annotation" GitHub repository
 
 # Clear memory
 rm(list=ls())
@@ -38,18 +38,31 @@ library(ggbeeswarm)
 study <- "2021-05_Abrolhos_BOSS"  # Enter your study name (campaign ID) here for naming of tidy data 
 
 # Set your working directory 
-setwd(getwd()) # Run this line for GitHub projects, or set your working directory manually
+working.dir <- getwd()
+setwd(working.dir) # Run this line for GitHub projects, or set your working directory manually
+
+# This script uses a file structure with a main folder for R scripts, plots and data
+# Within each data folder there are nested folders for raw data, tidy data, errors to check and raw habitat images
+# We recommend that you replicate our folder structure, however if you decide that a different file structure is more suitable for your project
+# Then change the directories below
+
+raw.dir   <- "data/raw"
+tidy.dir  <- "data/tidy"
+error.dir <- "data/errors to check"
+image.dir <- paste(working.dir, "data/images/BOSS", sep = "/")
+plot.dir  <- "plots"
 
 ### 1. Import data and run basic error reports ----
 # Read in metadata
-metadata  <- read_csv(paste("data/raw", paste0(study, "_Metadata.csv"), sep = "/")) %>% # Read in the file
+metadata  <- read_csv(paste(raw.dir, paste0(study, "_Metadata.csv"), sep = "/")) %>% # Read in the file
   ga.clean.names() %>% # Tidy the column names using GlobalArchive function 
   dplyr::select(sample, latitude, longitude, date, site, location, successful.count) %>% # Select only these columns to keep
   # mutate(sample=as.character(sample)) %>% # Turn this line on if you have numerical sample names 
   glimpse() # Preview the data
 
 # Read in the raw habitat data
-points <- read.delim(paste("data/raw", paste0(study, "_Dot Point Measurements.txt"), sep = "/"),header=T,skip=4,stringsAsFactors=FALSE) %>% # Read in the text file
+points <- read.delim(paste(raw.dir, paste0(study, "_Dot Point Measurements.txt"), sep = "/"),
+                     header=T,skip=4,stringsAsFactors=FALSE) %>% # Read in the text file
   ga.clean.names() %>% # Tidy the column names using GlobalArchive function
   mutate(sample=str_replace_all(.$filename,c(".png"="",".jpg"="",".JPG"=""))) %>% # Removes image file extensions from sample names
   # mutate(sample=as.character(sample)) %>% # Turn on if you have numerical sample names
@@ -64,7 +77,8 @@ num.annotations.habitat <- points %>%
 # If you have samples with missing points, you should rectify this in the original .TMObs file!
 
 # read in the relief gridded annotations
-relief <- read.delim(paste("data/raw", paste0(study, "_Relief_Dot Point Measurements.txt"), sep = "/"),header=T,skip=4,stringsAsFactors=FALSE) %>% # Read in the file
+relief <- read.delim(paste(raw.dir, paste0(study, "_Relief_Dot Point Measurements.txt"), sep = "/"),
+                     header=T,skip=4,stringsAsFactors=FALSE) %>% # Read in the file
   ga.clean.names() %>% # Tidy the column names using GlobalArchive function
   mutate(sample=str_replace_all(.$filename,c(".png"="",".jpg"="",".JPG"=""))) %>% # Removes file extensions from sample names
   # mutate(sample=as.character(sample)) %>% # Turn on if you have numerical sample names
@@ -80,7 +94,7 @@ num.annotations.relief  <- relief %>%
 
 ### 2. Run more thorough checks on the data against the metadata and images in the original directory ----
 # Point to images folders
-image.list <- dir(paste(getwd(),"data/images/BRUV", sep = "/")) %>% # Selects the directory where your habitat images are stored
+image.list <- dir(image.dir) %>% # Selects the directory where your habitat images are stored
   as.data.frame() %>% # Convert to a dataframe
   rename(image.name=1) %>% # Rename the column that contains image names
   mutate(sample=str_replace_all(.$image.name,c(".png"="",".jpg"="",".JPG"=""))) # Removes file extensions from image names
@@ -150,40 +164,42 @@ qaqc.all <- metadata %>%
 # Find samples that have been annotated for habitat but not for relief 
 habitat.no.relief <- qaqc.all %>%
   filter(!points.annotated%in%c("NA",NA)) %>%
-  filter(relief.annotated%in%c("NA",NA)) # There are none for this example dataset
+  filter(relief.annotated%in%c("NA",NA))
 
 # Find samples that have been annotated for relief but not for habitat
 relief.no.habitat <- qaqc.all %>%
   filter(points.annotated%in%c("NA",NA))%>%
-  filter(!relief.annotated%in%c("NA",NA)) # There are none for this example dataset
+  filter(!relief.annotated%in%c("NA",NA))
 
 # Export errors to check back through and fix in TransectMeasure
 # Export errors in the habitat annotation data
-write.csv(habitat.missing.image.not.annotated,paste("data/errors to check", paste(study,"habitat.missing.image.not.annotated.csv", sep = "."), sep = "/"),row.names = FALSE) 
-write.csv(habitat.missing.annotation,paste("data/errors to check", paste(study,"habitat.missing.annotation.csv", sep = "."), sep = "/"),row.names = FALSE) 
-write.csv(habitat.missing.image,paste("data/errors to check", paste(study,"habitat.missing.image.csv", sep = "."), sep = "/"),row.names = FALSE) 
-write.csv(habitat.wrong.points,paste("data/errors to check", paste(study,"habitat.wrong.points.csv", sep = "."), sep = "/"),row.names = FALSE) 
-write.csv(habitat.no.relief,paste("data/errors to check", paste(study,"habitat.no.relief.csv", sep = "."), sep = "/"),row.names = FALSE) 
+write.csv(habitat.missing.image.not.annotated,paste(error.dir, paste(study,"habitat.missing.image.not.annotated.csv", sep = "."), sep = "/"),row.names = FALSE) 
+write.csv(habitat.missing.annotation,paste(error.dir, paste(study,"habitat.missing.annotation.csv", sep = "."), sep = "/"),row.names = FALSE) 
+write.csv(habitat.missing.image,paste(error.dir, paste(study,"habitat.missing.image.csv", sep = "."), sep = "/"),row.names = FALSE) 
+write.csv(habitat.wrong.points,paste(error.dir, paste(study,"habitat.wrong.points.csv", sep = "."), sep = "/"),row.names = FALSE) 
+write.csv(habitat.no.relief,paste(error.dir, paste(study,"habitat.no.relief.csv", sep = "."), sep = "/"),row.names = FALSE) 
 
 # Export errors in the relief annotation data
-write.csv(relief.missing.image.not.annotated,paste("data/errors to check", paste(study,"relief.missing.image.not.annotated.csv", sep = "."), sep = "/"),row.names = FALSE) 
-write.csv(relief.missing.annotation,paste("data/errors to check", paste(study,"relief.missing.annotation.csv", sep = "."), sep = "/"),row.names = FALSE) 
-write.csv(relief.missing.image,paste("data/errors to check", paste(study,"relief.missing.image.csv", sep = "."), sep = "/"),row.names = FALSE) 
-write.csv(relief.wrong.points,paste("data/errors to check", paste(study,"relief.wrong.points.csv", sep = "."), sep = "/"),row.names = FALSE) 
-write.csv(relief.no.habitat,paste("data/errors to check", paste(study,"relief.no.habitat.csv", sep = "."), sep = "/"),row.names = FALSE) 
+write.csv(relief.missing.image.not.annotated,paste(error.dir, paste(study,"relief.missing.image.not.annotated.csv", sep = "."), sep = "/"),row.names = FALSE) 
+write.csv(relief.missing.annotation,paste(error.dir, paste(study,"relief.missing.annotation.csv", sep = "."), sep = "/"),row.names = FALSE) 
+write.csv(relief.missing.image,paste(error.dir, paste(study,"relief.missing.image.csv", sep = "."), sep = "/"),row.names = FALSE) 
+write.csv(relief.wrong.points,paste(error.dir, paste(study,"relief.wrong.points.csv", sep = "."), sep = "/"),row.names = FALSE) 
+write.csv(relief.no.habitat,paste(error.dir, paste(study,"relief.no.habitat.csv", sep = "."), sep = "/"),row.names = FALSE) 
 
 ###   STOP     AND    READ      THE     NEXT      PART     ###     
 
-# We strongly encourage you to fix these errors at the source (i.e. TMObs).
-# NOW check through the files in your "Errors to check" folder and make corrections to .TMObs / generic files and then re-run this script.
+# We strongly encourage you to fix these errors at the source (i.e. TMObs)
+# Now check through the files in your "Errors to check" folder and make corrections to .TMObs / generic files and then re-run this script
+
+# In this example dataset we have no errors
 
 ### 3. Tidy data into broad and detailed point-level and percent cover dataframes ----
 # Join the habitat and relief annotations
-habitat <- bind_rows(points, relief) # Stacks the habitat and relief data 
+habitat <- bind_rows(points, relief) # Stack the habitat and relief data 
 
 # Create broad point annotations
 broad.points <- habitat %>%
-  select(-c(morphology,type,relief)) %>% # Select only these columns
+  select(-c(morphology,type,relief)) %>% # Remove these columns
   filter(!broad%in%c("",NA,"Unknown","Open.Water","Open Water")) %>% # Remove blank, NA, Unknown and Open water data
   mutate(broad=paste("broad",broad,sep = ".")) %>% # Add broad. to all entries
   mutate(count=1) %>% # Add a count column to summarise the number of points
@@ -192,8 +208,9 @@ broad.points <- habitat %>%
   select(-c(image.row,image.col)) %>% # Remove image row and image col
   group_by(sample) %>%
   summarise_all(list(sum)) %>% # Add the points per sample across all broad habitat columns
-  mutate(total.points.annotated=rowSums(.[,2:(ncol(.))],na.rm = TRUE )) %>% # Get row sums of all data columns
+  mutate(total.points.annotated=rowSums(.[,2:(ncol(.))],na.rm = TRUE )) %>% # Take row sums of all data columns
   ga.clean.names() %>% # Clean names using GlobalArchive function
+  ungroup() %>% # Ungroup
   glimpse() # Preview the data
 
 # Create broad percent cover
@@ -201,6 +218,7 @@ broad.percent.cover <- broad.points %>%
   group_by(sample) %>%
   mutate_at(vars(starts_with("broad")),list(~./total.points.annotated*100)) %>% # Create percent cover
   dplyr::select(-c(total.points.annotated)) %>% # Remove this column
+  ungroup() %>% # Ungroup
   glimpse() # Preview the data
 
 # Create  detailed point annotations
@@ -219,13 +237,15 @@ detailed.points <- habitat %>%
   summarise_all(list(sum)) %>% # Add the points per sample across all detailed habitat columns
   mutate(total.points.annotated=rowSums(.[,2:(ncol(.))],na.rm = TRUE )) %>% # Get row sums of all data columns
   ga.clean.names() %>% # Clean names using GlobalArchive function
+  ungroup() %>% # Ungroup
   glimpse() # Preview the data
 
 # Create detailed percent cover
 detailed.percent.cover <- detailed.points %>%
   group_by(sample) %>%
   mutate_at(vars(starts_with("detailed")),list(~./total.points.annotated*100)) %>% # Create percent cover
-  select(-c(total.points.annotated)) %>% # Remove this columns
+  select(-c(total.points.annotated)) %>% # Remove this column
+  ungroup() %>% # Ungroup
   glimpse() # Preview the data
 
 # Create relief
@@ -319,15 +339,15 @@ gg.relief <- ggplot() +
 gg.relief
 
 # Save the plots to refer to later
-ggsave(paste("plots",paste(study, "broad.habitat.png", sep = "."), sep = "/"),gg.broad.hab,dpi=600,width=6.0, height = 6.0)
-ggsave(paste("plots", paste(study, "detailed.habitat.png", sep = "."), sep ="/"),gg.detailed.hab,dpi=600,width=8.0, height = 6.0)
-ggsave(paste("plots", paste(study, "relief.png", sep = "."), sep = "/"),gg.relief,dpi=600,width=6.0, height = 6.0)
+ggsave(paste(plot.dir,paste(study, "broad.habitat.png", sep = "."), sep = "/"),gg.broad.hab,dpi=600,width=6.0, height = 6.0)
+ggsave(paste(plot.dir, paste(study, "detailed.habitat.png", sep = "."), sep ="/"),gg.detailed.hab,dpi=600,width=8.0, height = 6.0)
+ggsave(paste(plot.dir, paste(study, "relief.png", sep = "."), sep = "/"),gg.relief,dpi=600,width=6.0, height = 6.0)
 
 ### 6. Export tidy datasets to a .csv format suitable for use in modelling and statistical testing ----
 # Export point annotations
-write.csv(habitat.broad.points,file=paste("data/tidy", paste(study,"random-points_broad.habitat.csv",sep = "_"), sep = "/"), row.names=FALSE)
-write.csv(habitat.detailed.points,file=paste("data/tidy",paste(study,"random-points_detailed.habitat.csv",sep = "_"), sep = "/"), row.names=FALSE)
+write.csv(habitat.broad.points,file=paste(tidy.dir, paste(study,"random-points_broad.habitat.csv",sep = "_"), sep = "/"), row.names=FALSE)
+write.csv(habitat.detailed.points,file=paste(tidy.dir,paste(study,"random-points_detailed.habitat.csv",sep = "_"), sep = "/"), row.names=FALSE)
 
 # Export percent cover annotations
-write.csv(habitat.broad.percent,file=paste("data/tidy", paste(study,"random-points_percent-cover_broad.habitat.csv",sep = "_"), sep = "/"), row.names=FALSE)
-write.csv(habitat.detailed.percent,file=paste("data/tidy",paste(study,"random-points_percent-cover_detailed.habitat.csv",sep = "_"), sep = "/"), row.names=FALSE)
+write.csv(habitat.broad.percent,file=paste(tidy.dir, paste(study,"random-points_percent-cover_broad.habitat.csv",sep = "_"), sep = "/"), row.names=FALSE)
+write.csv(habitat.detailed.percent,file=paste(tidy.dir,paste(study,"random-points_percent-cover_detailed.habitat.csv",sep = "_"), sep = "/"), row.names=FALSE)
