@@ -1,0 +1,26 @@
+BROAD	RELIEF	CODE
+Ascidians	*	35000000
+Bryozoa	*	20000000
+Consolidated	*	82001000
+Unconsolidated	*	82001005
+Crinoids	*	25001000
+Hydrocoral	*	11077000
+Hydroids 	*	11001000
+Invertebrate Complex	*	
+Macroalgae	*	80300000
+Mangrove	*	63345000
+Octocoral/Black	*	11168901
+Open Water		
+Seagrasses	*	63600901
+Sponges	*	10000000
+Stony corals	*	11290000
+True anemones	*	11229000
+Unknown	*	
+Zoanthids	*	11284000
+	".0. Flat substrate, sandy, rubble with few features. ~0 substrate slope."	
+	.1. Some relief features amongst mostly flat substrate/sand/rubble. <45 degree substrate slope.	
+	.2. Mostly relief features amongst some flat substrate or rubble. ~45 substrate slope.	
+	.3. Good relief structure with some overhangs. >45 substrate slope.	
+	".4. High structural complexity, fissures and caves. Vertical wall. ~90 substrate slope."	
+	".5. Exceptional structural complexity, numerous large holes and caves. Vertical wall. ~90 substrate slope."	
+	Unknown	

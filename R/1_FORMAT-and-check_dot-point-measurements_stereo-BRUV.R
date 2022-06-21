@@ -4,6 +4,9 @@
 
 # NOTE: ERRORS SHOULD BE FIXED IN THE .TMObs AND THE SCRIPT RE-RAN!
 
+# NOTE: This example dataset has been analysed using the standard 'TM schema_BROAD.MORPH.TYPE.txt' file
+# Follow the notes to edit the script for use with the broad only 'TM schema_BROAD.txt' and fine 'TM schema_BROAD.MORPH.TYPE.FINE.txt' files 
+
 ### OBJECTIVES ###
 # 1. Import data and run basic error reports
 # 2. Run more thorough checks on the data against the metadata and images in the original directory
@@ -66,7 +69,7 @@ points <- read.delim(paste(raw.dir, paste0(study, "_Dot Point Measurements.txt")
           ga.clean.names() %>% # Tidy the column names using GlobalArchive function
           mutate(sample=str_replace_all(.$filename,c(".png"="",".jpg"="",".JPG"=""))) %>% # Removes image file extensions from sample names
           # mutate(sample=as.character(sample)) %>% # Turn on if you have numerical sample names
-          select(sample,image.row,image.col,broad,morphology,type) %>% # Select only these columns to keep
+          select(sample,image.row,image.col,broad,morphology,type) %>% # Select only these columns to keep - remove 'morphology' and 'type' for the broad only schema, add in 'fine' for the fine schema
           glimpse() # Preview the data
 
 # Check to see if you have samples with points extra or missing points annotated
@@ -79,11 +82,11 @@ num.annotations.habitat <- points %>%
 # read in the relief gridded annotations
 relief <- read.delim(paste(raw.dir, paste0(study, "_Relief_Dot Point Measurements.txt"), sep = "/"),
                      header=T,skip=4,stringsAsFactors=FALSE) %>% # Read in the file
-          ga.clean.names() %>% # Tidy the column names using GlobalArchive function
-          mutate(sample=str_replace_all(.$filename,c(".png"="",".jpg"="",".JPG"=""))) %>% # Removes file extensions from sample names
-          # mutate(sample=as.character(sample)) %>% # Turn on if you have numerical sample names
-          select(sample,image.row,image.col,broad,morphology,type,relief) %>% # Select only these columns to keep
-          glimpse() # Preview the data
+  ga.clean.names() %>% # Tidy the column names using GlobalArchive function
+  mutate(sample=str_replace_all(.$filename,c(".png"="",".jpg"="",".JPG"=""))) %>% # Removes file extensions from sample names
+  # mutate(sample=as.character(sample)) %>% # Turn on if you have numerical sample names
+  select(sample,relief) %>% # Select only these columns to keep
+  glimpse() # Preview the data
 
 # Check to see if you have samples with points extra or missing points annotated
 num.annotations.relief  <- relief %>%
@@ -130,8 +133,8 @@ habitat.wrong.points <- num.annotations.habitat %>%
 # Create a data frame to check relief annotations against using original metadata
 qaqc.relief <- metadata %>%
                dplyr::select(sample, date) %>% # Select only these columns to keep
-               dplyr::left_join(image.list)%>% # Joins sample and date from metadata with the list of images
-               dplyr::left_join(num.annotations.relief)%>% # And the number of annotation points per image
+               dplyr::left_join(image.list) %>% # Joins sample and date from metadata with the list of images
+               dplyr::left_join(num.annotations.relief) %>% # And the number of annotation points per image
                glimpse() # Preview the data
 
 # Find samples where images and annotations are missing
@@ -199,7 +202,7 @@ habitat <- bind_rows(points, relief) # Stack the habitat and relief data
 
 # Create broad point annotations
 broad.points <- habitat %>%
-                select(-c(morphology,type,relief)) %>% # Remove these columns
+                select(-c(morphology,type,relief)) %>% # Remove these columns - turn off this line if using broad only schema, add in 'fine' if using the fine schema 
                 filter(!broad%in%c("",NA,"Unknown","Open.Water","Open Water")) %>% # Remove blank, NA, Unknown and Open water data
                 mutate(broad=paste("broad",broad,sep = ".")) %>% # Add broad. to all entries
                 mutate(count=1) %>% # Add a count column to summarise the number of points
@@ -221,14 +224,14 @@ broad.percent.cover <- broad.points %>%
                        ungroup() %>% # Ungroup
                        glimpse() # Preview the data
 
-# Create  detailed point annotations
+# Create  detailed point annotations - turn off this section if using the broad only schema
 detailed.points <- habitat %>%
-                   select(-c(relief)) %>% # Remove this columns
+                   select(-c(relief)) %>% # Remove this column
                    filter(!morphology %in% c("",NA,"Unknown")) %>% # Remove blank, NA and Unknown entries from morphology
                    filter(!broad%in%c("",NA,"Unknown","Open Water","Open.Water")) %>% # Remove blank, NA, Unknown and Open water entries from broad
-                   mutate(morphology=paste("detailed",broad,morphology,type,sep = ".")) %>% # Paste broad morphology and type and add detailed.
+                   mutate(morphology=paste("detailed",broad,morphology,type,sep = ".")) %>% # Paste broad morphology and type and add detailed. - add 'fine' if using fine schema
                    mutate(morphology=str_replace_all(.$morphology, c(".NA"="","[^[:alnum:] ]"="."," "="","10mm.."="10mm."))) %>% # Tidy some entries in morphology
-                   select(-c(broad,type)) %>% # Remove these columns
+                   select(-c(broad,type)) %>% # Remove these columns - add 'fine' if using the fine schema
                    mutate(count=1) %>% # Add a count column to summarise the number of points
                    group_by(sample) %>%
                    spread(key=morphology,value=count,fill=0) %>% # Spread the data to wide format
@@ -240,7 +243,7 @@ detailed.points <- habitat %>%
                    ungroup() %>% # Ungroup
                    glimpse() # Preview the data
 
-# Create detailed percent cover
+# Create detailed percent cover - turn off this section if using the broad only schema
 detailed.percent.cover <- detailed.points %>%
                           group_by(sample) %>%
                           mutate_at(vars(starts_with("detailed")),list(~./total.points.annotated*100)) %>% # Create percent cover
@@ -252,7 +255,6 @@ detailed.percent.cover <- detailed.points %>%
 relief.grid <- habitat %>%
                filter(!broad%in%c("Open Water","Unknown")) %>% # Remove Open water and Unknown entries from broad
                filter(!relief%in%c("",NA)) %>% # Remove blank and NA entries from relief
-               select(-c(broad,morphology,type,image.row,image.col)) %>% # Remove these columns
                mutate(relief.rank=ifelse(relief==".0. Flat substrate, sandy, rubble with few features. ~0 substrate slope.",0, # Create numerical relief ranks
                   ifelse(relief==".1. Some relief features amongst mostly flat substrate/sand/rubble. <45 degree substrate slope.",1,
                   ifelse(relief==".2. Mostly relief features amongst some flat substrate or rubble. ~45 substrate slope.",2,

@@ -4,6 +4,9 @@
 
 # NOTE: ERRORS SHOULD BE FIXED IN THE .TMObs AND THE SCRIPT RE-RAN!
 
+# NOTE: This example dataset has been analysed using the 'TM schema_BROAD.MORPH.TYPE.txt' file
+# Follow the notes to edit the script for use with the 'TM schema_BROAD.txt' and 'TM schema_BROAD.MORPH.TYPE.FINE.txt' files 
+
 ### OBJECTIVES ###
 # 1. Import data and run basic error reports
 # 2. Run more thorough checks on the data against the metadata and images in the original directory
