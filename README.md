@@ -1,4 +1,4 @@
-#### Benthic composition and relief for horizontally facing imagery
+## Benthic composition and relief for horizontally facing imagery
 
 We have developed a simple approach to characterise benthic composition and complexity from horizontally facing imagery (including stereo-BRUVs and panoramic drop cameras), adapting existing standardised schema for benthic composition ([CATAMI classification scheme](https://github.com/catami/catami.github.com/blob/master/catami-docs/CATAMI%20class_PDFGuide_V4_20141218.pdf)) and benthic complexity <sup><a href="https://paperpile.com/c/0wnItn/M1vE">1</a></sup>.
 
@@ -29,19 +29,18 @@ This github repository contains:
 * To load the attribute file containing all of the CATAMI habitat classification codes: “Measurements” > “Load attribute file ...” > The attribute file is a text file containing the information necessary for populating the drop down tabs when classifying your image (Figure 4).
 
 ![alt_text](images/hab1.jpg "image_tooltip")
-
 ##### Figure 1: TransectMeasure initial opening screen. 
 
-![alt_text](images/hab2.jpg "image_tooltip")
 
+![alt_text](images/hab2.jpg "image_tooltip")
 ##### Figure 2: Creating a new measurement file in TransectMeasure.
 
-![alt_text](images/hab3.jpg "image_tooltip")
 
+![alt_text](images/hab3.jpg "image_tooltip")
 ##### Figure 3: Setting the picture directory and loading the image in TransectMeasure.
 
-![alt_text](images/hab4.png "image_tooltip")
 
+![alt_text](images/hab4.png "image_tooltip")
 ##### Figure 4: Loading the attribute file in TransectMeasure.
 
 
@@ -54,24 +53,24 @@ This github repository contains:
 NOTE: To annotate composite imagery, multiple areas of interest will need to be added corresponding to the images contained in the composite image, with points added to imagery after specifying areas of interest using “cntrl+ right click” > “Add dots” > “Add to the existing points” (Figure 9).
 
 ![alt_text](images/hab5.png "image_tooltip")
-
 ##### Figure 5: Adding a new area of interest in TransectMeasure.
 
-![alt_text](images/hab6.png "image_tooltip")
 
+![alt_text](images/hab6.png "image_tooltip")
 ##### Figure 6: Setting the dot configuration in TransectMeasure.
 
-![alt_text](images/hab7.png "image_tooltip")
 
+![alt_text](images/hab7.png "image_tooltip")
 ##### Figure 7: Adding dots in TransectMeasure.
 
-![alt_text](images/hab8.png "image_tooltip")
 
+![alt_text](images/hab8.png "image_tooltip")
 ##### Figure 8: Example of a stereo-BRUV image with random points added to the lower 50% of the image ready for annotation. 
 
-![alt_text](images/hab9.png "image_tooltip")
 
+![alt_text](images/hab9.png "image_tooltip")
 ##### Figure 9: Example of a fully annotated panoramic drop camera composite image. The red box in the bottom right image denotes the custom area of interest used to overlay the annotation points in TransectMeasure.
+
 
 #### 3. Classifying the benthic composition in an image
 
@@ -90,7 +89,6 @@ Note: Zoom into an image to analyse the benthic composition more closely by adju
 * Relief should not be annotated at this stage, with details on how to annotate relief outlined in the following section (_“4. Classifying the relief of an image”_).
 
 ![alt_text](images/hab10.jpg "image_tooltip")
-
 ##### Figure 10: The ‘attribute editor’ window within TransectMeasure.
 
 
@@ -121,23 +119,22 @@ NOTE: For composite imagery that consists of multiple images, gridded dot config
 NOTE: Any ‘rectangle’ that has some form of benthos/substrate visible should be classified for _Relief _(even if open water makes up the majority of the grid).
 
 ![alt_text](images/hab11.png "image_tooltip")
-
 ##### Figure 11: Setting the dot configuration in TransectMeasure.
 
-![alt_text](images/hab12.png "image_tooltip")
 
+![alt_text](images/hab12.png "image_tooltip")
 ##### Figure 12: Adding dots to an image in TransectMeasure.
 
-![alt_text](images/hab13.png "image_tooltip")
 
+![alt_text](images/hab13.png "image_tooltip")
 ##### Figure 13: Example of a stereo-BRUV image annotated for relief, showing measurements labels for field of view.
 
-![alt_text](images/hab14.png "image_tooltip")
 
+![alt_text](images/hab14.png "image_tooltip")
 ##### Figure 14: Example of a panoramic drop camera composite image annotated for relief, showing annotation labels for field of view.
 
-![alt_text](images/hab15.jpg "image_tooltip")
 
+![alt_text](images/hab15.jpg "image_tooltip")
 ##### Figure 15: The ‘attribute editor’ window within TransectMeasure.
 
 
@@ -148,16 +145,16 @@ NOTE: Any ‘rectangle’ that has some form of benthos/substrate visible should
 * The following box should appear: Double click to the right of the ✓ (under “Data”) in the “Input file directory” row, then locate the folder where your *.TMObs file has been saved, do the same for the “output file directory” to specify the folder location for saving your text file (Figure 18). Now select “Process”. This will generate an output text file that can be processed using the scripts included in the GitHub repository (see ‘Annotation summary and quality control’). 
 
 ![alt_text](images/hab16.jpg "image_tooltip")
-
 ##### Figure 16: Writing to file in TransectMeasure in order to save image observations.
 
-![alt_text](images/hab17.jpg "image_tooltip")
 
+![alt_text](images/hab17.jpg "image_tooltip")
 ##### Figure 17: The ‘batch text file output’ option in TransectMeasure.
 
-![alt_text](images/hab18.jpg "image_tooltip")
 
+![alt_text](images/hab18.jpg "image_tooltip")
 ##### Figure 18: Input and output file directory options for batch text file outputs in TransectMeasure.
+
 
 ### Recommended approaches
 
