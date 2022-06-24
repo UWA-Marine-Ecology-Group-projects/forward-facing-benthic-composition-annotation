@@ -28,20 +28,25 @@ This github repository contains:
     * For stereo-BRUV imagery, left images are annotated, and for panoramic drop camera imagery, top images are annotated.
 * To load the attribute file containing all of the CATAMI habitat classification codes: “Measurements” > “Load attribute file ...” > The attribute file is a text file containing the information necessary for populating the drop down tabs when classifying your image (Figure 4).
 
+
 ![alt_text](images/hab1.jpg "image_tooltip")
 ##### Figure 1: TransectMeasure initial opening screen. 
+
 
 
 ![alt_text](images/hab2.jpg "image_tooltip")
 ##### Figure 2: Creating a new measurement file in TransectMeasure.
 
 
+
 ![alt_text](images/hab3.jpg "image_tooltip")
 ##### Figure 3: Setting the picture directory and loading the image in TransectMeasure.
 
 
+
 ![alt_text](images/hab4.png "image_tooltip")
 ##### Figure 4: Loading the attribute file in TransectMeasure.
+
 
 
 #### 2. Setting and overlaying the grid
