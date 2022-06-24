@@ -71,7 +71,7 @@ NOTE: To annotate composite imagery, multiple areas of interest will need to be 
 
 ![alt_text](images/hab9.png "image_tooltip")
 
-#### Figure 9: Example of a fully annotated panoramic drop camera composite image. The red box in the bottom right image denotes the custom area of interest used to overlay the annotation points in TransectMeasure.
+##### Figure 9: Example of a fully annotated panoramic drop camera composite image. The red box in the bottom right image denotes the custom area of interest used to overlay the annotation points in TransectMeasure.
 
 #### 3. Classifying the benthic composition in an image
 
@@ -91,7 +91,7 @@ Note: Zoom into an image to analyse the benthic composition more closely by adju
 
 ![alt_text](images/hab10.jpg "image_tooltip")
 
-#### Figure 10: The ‘attribute editor’ window within TransectMeasure.
+##### Figure 10: The ‘attribute editor’ window within TransectMeasure.
 
 
 #### 4. Classifying the relief of an image
@@ -134,7 +134,7 @@ NOTE: Any ‘rectangle’ that has some form of benthos/substrate visible should
 
 ![alt_text](images/hab14.png "image_tooltip")
 
-Figure 14: Example of a panoramic drop camera composite image annotated for relief, showing annotation labels for field of view.
+##### Figure 14: Example of a panoramic drop camera composite image annotated for relief, showing annotation labels for field of view.
 
 ![alt_text](images/hab15.jpg "image_tooltip")
 
