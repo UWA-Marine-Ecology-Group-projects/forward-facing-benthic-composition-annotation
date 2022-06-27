@@ -29,7 +29,7 @@ This github repository contains:
 * To load the attribute file containing all of the CATAMI habitat classification codes: “Measurements” > “Load attribute file ...” > The attribute file is a text file containing the information necessary for populating the drop down tabs when classifying your image (Figure 4).
 
 
-![alt_text](images/hab1.jpg "image_tooltip")
+![alt_text]("https://github.com/benthic-bruvs-field-manual/Benthic-BRUVs-field-manual.github.io/blob/master/images/figures/hab1.jpg?raw=true")
 ##### Figure 1: TransectMeasure initial opening screen. 
 
 
