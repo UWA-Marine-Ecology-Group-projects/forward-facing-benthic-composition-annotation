@@ -341,9 +341,9 @@ gg.relief <- ggplot() +
 gg.relief
 
 # Save the plots to refer to later
-ggsave(paste(plot.dir,paste(study, "broad.habitat.png", sep = "."), sep = "/"),gg.broad.hab,dpi=600,width=6.0, height = 6.0)
+ggsave(paste(plot.dir,paste(study, "broad.habitat.png", sep = "."), sep = "/"),gg.broad.hab,dpi=600,width=6.0, height = 3.0)
 ggsave(paste(plot.dir, paste(study, "detailed.habitat.png", sep = "."), sep ="/"),gg.detailed.hab,dpi=600,width=8.0, height = 6.0)
-ggsave(paste(plot.dir, paste(study, "relief.png", sep = "."), sep = "/"),gg.relief,dpi=600,width=6.0, height = 6.0)
+ggsave(paste(plot.dir, paste(study, "relief.png", sep = "."), sep = "/"),gg.relief,dpi=600,width=6.0, height = 3.0)
 
 ### 6. Export tidy datasets to a .csv format suitable for use in modelling and statistical testing ----
 # Export point annotations
