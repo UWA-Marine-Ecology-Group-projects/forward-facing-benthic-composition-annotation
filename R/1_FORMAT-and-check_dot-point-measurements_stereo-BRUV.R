@@ -36,6 +36,8 @@ library(readr)
 # To visualise data
 library(ggplot2)
 library(ggbeeswarm)
+library(leaflet)
+library(leaflet.minicharts)
 
 # Study name 
 study <- "2021-05_Abrolhos_stereo-BRUVs"  # Enter your study name (campaign ID) here
@@ -339,6 +341,37 @@ gg.relief <- ggplot() +
   labs(x = "Number of points", y = "Relief (0-5)") + 
   theme_classic()
 gg.relief
+
+# Visualise the habitat data as a leaflet scatterpie plot
+
+leaflet() %>%
+  addTiles() %>%
+  addProviderTiles('Esri.WorldImagery', group = "World Imagery") %>%
+  addLayersControl(
+    baseGroups = c("Open Street Map", "World Imagery"), 
+    options = layersControlOptions(collapsed = FALSE)) %>%
+  addMinicharts(habitat.broad.points$longitude, habitat.broad.points$latitude,
+                type = "pie",
+                chartdata = habitat.broad.points[grep("broad", names(habitat.broad.points))],
+                width = 20, transitionTime = 0)
+
+# Visualise the habitat data as a leaflet bubble plot
+# This plot visualises one habitat class at a time
+# Change the class as indicated below to visualise each habitat class
+
+leaflet() %>%
+  addTiles() %>%
+  addProviderTiles('Esri.WorldImagery', group = "World Imagery") %>%
+  addLayersControl(
+    baseGroups = c("Open Street Map", "World Imagery"), 
+    options = layersControlOptions(collapsed = FALSE)) %>%
+  addMinicharts(habitat.broad.points$longitude, habitat.broad.points$latitude,
+                type = "pie",
+                chartdata = habitat.broad.points$broad.unconsolidated, # Change here
+                # colorPalette = colors, 
+                width = 5+habitat.broad.points$broad.unconsolidated, # Change here
+                transitionTime = 0,
+                opacity = 0.5)
 
 # Save the plots to refer to later
 ggsave(paste(plot.dir,paste(study, "broad.habitat.png", sep = "."), sep = "/"),gg.broad.hab,dpi=600,width=6.0, height = 3.0)
