@@ -30,6 +30,7 @@ This github repository contains:
 
 
 <img src="https://raw.githubusercontent.com/benthic-bruvs-field-manual/Benthic-BRUVs-field-manual.github.io/master/images/figures/hab1.jpg">
+
 ##### Figure 1: TransectMeasure initial opening screen. 
 
 
