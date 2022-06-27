@@ -35,7 +35,8 @@ This github repository contains:
 
 
 
-![alt_text](images/hab2.jpg "image_tooltip")
+<img src="https://raw.githubusercontent.com/benthic-bruvs-field-manual/Benthic-BRUVs-field-manual.github.io/master/images/figures/hab2.jpg">
+
 ##### Figure 2: Creating a new measurement file in TransectMeasure.
 
 
