@@ -12,8 +12,9 @@
 # 2. Run more thorough checks on the data against the metadata and images in the original directory
 # 3. Tidy data into broad and detailed point-level and percent-cover data
 # 4. Tidy the final data into organised dataframes
-# 5. Visualise the final data and visually inspect for data trends and final errors
+# 5. Inspect for tidy data for any errors
 # 6. Export tidy datasets to a .csv format suitable for use in modelling and statistical testing
+# 7. Visualise the data spatially
 
 # Please forward any updates and improvements to tim.langlois@uwa.edu.au & claude.spencer@uwa.edu.au or raise an issue in the "forward-facing-benthic-composition-annotation" GitHub repository
 
@@ -38,6 +39,7 @@ library(ggplot2)
 library(ggbeeswarm)
 library(leaflet)
 library(leaflet.minicharts)
+library(RColorBrewer)
 
 # Study name 
 study <- "2021-05_Abrolhos_stereo-BRUVs"  # Enter your study name (campaign ID) here
@@ -288,7 +290,7 @@ habitat.detailed.percent <- metadata %>%
   left_join(detailed.percent.cover, by = "sample") %>% # Join metadata with habitat data
   left_join(relief.grid) # And relief
 
-### 5. Visualise the final data and visually inspect for any final errors ----
+### 5. Inspect for tidy data for any errors ----
 # Typical errors found could include samples where the wrong class has been assigned (ie. 20 point of octocoral instead of 20 points of sand)
 # Or high cover of uncommon or rare classes
 
@@ -342,37 +344,6 @@ gg.relief <- ggplot() +
   theme_classic()
 gg.relief
 
-# Visualise the habitat data as a leaflet scatterpie plot
-
-leaflet() %>%
-  addTiles() %>%
-  addProviderTiles('Esri.WorldImagery', group = "World Imagery") %>%
-  addLayersControl(
-    baseGroups = c("Open Street Map", "World Imagery"), 
-    options = layersControlOptions(collapsed = FALSE)) %>%
-  addMinicharts(habitat.broad.points$longitude, habitat.broad.points$latitude,
-                type = "pie",
-                chartdata = habitat.broad.points[grep("broad", names(habitat.broad.points))],
-                width = 20, transitionTime = 0)
-
-# Visualise the habitat data as a leaflet bubble plot
-# This plot visualises one habitat class at a time
-# Change the class as indicated below to visualise each habitat class
-
-leaflet() %>%
-  addTiles() %>%
-  addProviderTiles('Esri.WorldImagery', group = "World Imagery") %>%
-  addLayersControl(
-    baseGroups = c("Open Street Map", "World Imagery"), 
-    options = layersControlOptions(collapsed = FALSE)) %>%
-  addMinicharts(habitat.broad.points$longitude, habitat.broad.points$latitude,
-                type = "pie",
-                chartdata = habitat.broad.points$broad.unconsolidated, # Change here
-                # colorPalette = colors, 
-                width = 5+habitat.broad.points$broad.unconsolidated, # Change here
-                transitionTime = 0,
-                opacity = 0.5)
-
 # Save the plots to refer to later
 ggsave(paste(plot.dir,paste(study, "broad.habitat.png", sep = "."), sep = "/"),gg.broad.hab,dpi=600,width=6.0, height = 3.0)
 ggsave(paste(plot.dir, paste(study, "detailed.habitat.png", sep = "."), sep ="/"),gg.detailed.hab,dpi=600,width=8.0, height = 6.0)
@@ -386,3 +357,37 @@ write.csv(habitat.detailed.points,file=paste(tidy.dir,paste(study,"random-points
 # Export percent cover annotations
 write.csv(habitat.broad.percent,file=paste(tidy.dir, paste(study,"random-points_percent-cover_broad.habitat.csv",sep = "_"), sep = "/"), row.names=FALSE)
 write.csv(habitat.detailed.percent,file=paste(tidy.dir,paste(study,"random-points_percent-cover_detailed.habitat.csv",sep = "_"), sep = "/"), row.names=FALSE)
+
+### 7. Spatially visualise the data ----
+# Visualise the habitat data as an interactive scatterpie plot
+# This plot uses spatial pie charts to visualise the proportion of habitat classes in each sample
+# The plot can be scrolled through and zoomed, and has 2 choices of base layer imagery
+# Create a color palette to plot the scatterpies with using the 'RColorbrewer' palettes
+cols <- brewer.pal(length(habitat.broad.points[grep("broad", names(habitat.broad.points))]), "Accent") # Paired also looks ok
+
+# Create the plot
+leaflet() %>% # Create a leaflet plot
+  addTiles() %>% # Add the Open Street Map base layer
+  addProviderTiles('Esri.WorldImagery', group = "World Imagery") %>% # Add ESRI satellite imagery as a base layer
+  addLayersControl(baseGroups = c("Open Street Map", "World Imagery"), 
+                   options = layersControlOptions(collapsed = FALSE)) %>%
+  addMinicharts(habitat.broad.points$longitude, habitat.broad.points$latitude, # Add a spatial minichart using spatial information from the metadata
+                type = "pie", # Make it a spatial pie chart
+                colorPalette = cols, # Color using the RColorbrewer palette
+                chartdata = habitat.broad.points[grep("broad", names(habitat.broad.points))], # Select only columns starting with 'broad'
+                width = 20, transitionTime = 0) # Set the size and transition time of the points
+
+# Visualise the habitat data as a leaflet bubble plot
+# This plot visualises one habitat class at a time
+# Change the class as indicated below to visualise each class
+
+# Create the plot
+leaflet() %>% # Create a leaflet plot
+  addTiles() %>% # Add the Open Street Map base layer
+  addProviderTiles('Esri.WorldImagery', group = "World Imagery") %>% # Add ESRI satellite imagery as a base layer
+  addLayersControl(baseGroups = c("Open Street Map", "World Imagery"), 
+                   options = layersControlOptions(collapsed = FALSE)) %>%
+  addMinicharts(habitat.broad.points$longitude, habitat.broad.points$latitude, # Add a spatial minichart using spatial information from the metadata
+                chartdata = habitat.broad.points$broad.unconsolidated, # Change here to visualise a different habitat class
+                width = 5 + habitat.broad.points$broad.unconsolidated, # Change here to visualise a different habitat class
+                transitionTime = 0, opacity = 0.5) # Set the transition time and the opacity of the points
