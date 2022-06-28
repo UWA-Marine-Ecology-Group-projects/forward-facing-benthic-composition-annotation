@@ -12,8 +12,9 @@
 # 2. Run more thorough checks on the data against the metadata and images in the original directory
 # 3. Tidy data into broad and detailed point-level and percent-cover data
 # 4. Tidy the final data into organised dataframes
-# 5. Visualise the final data and visually inspect for data trends and final errors
+# 5. Inspect for tidy data for any errors
 # 6. Export tidy datasets to a .csv format suitable for use in modelling and statistical testing
+# 7. Visualise the data spatially
 
 # Please forward any updates and improvements to tim.langlois@uwa.edu.au & claude.spencer@uwa.edu.au or raise an issue in the "forward-facing-benthic-composition-annotation" GitHub repository
 
@@ -36,6 +37,9 @@ library(readr)
 # To visualise data
 library(ggplot2)
 library(ggbeeswarm)
+library(leaflet)
+library(leaflet.minicharts)
+library(RColorBrewer)
 
 # Study name 
 study <- "2021-05_Abrolhos_BOSS"  # Enter your study name (campaign ID) here for naming of tidy data 
@@ -287,7 +291,7 @@ habitat.detailed.percent <- metadata %>%
   left_join(detailed.percent.cover, by = "sample") %>% # Join metadata with habitat data
   left_join(relief.grid) # And relief
 
-### 5. Visualise the final data and visually inspect for any final errors ----
+### 5. Inspect for tidy data for any errors ----
 # Typical errors found could include samples where the wrong class has been assigned (ie. 20 point of octocoral instead of 20 points of sand)
 # Or high cover of uncommon or rare classes
 
@@ -354,3 +358,58 @@ write.csv(habitat.detailed.points,file=paste(tidy.dir,paste(study,"random-points
 # Export percent cover annotations
 write.csv(habitat.broad.percent,file=paste(tidy.dir, paste(study,"random-points_percent-cover_broad.habitat.csv",sep = "_"), sep = "/"), row.names=FALSE)
 write.csv(habitat.detailed.percent,file=paste(tidy.dir,paste(study,"random-points_percent-cover_detailed.habitat.csv",sep = "_"), sep = "/"), row.names=FALSE)
+
+### 7. Spatially visualise the data ----
+
+# This plot uses spatial pie charts to visualise the proportion of habitat classes in each sample
+# The plot can be scrolled through and zoomed, and has 2 choices of base layer imagery
+
+# Create a color palette to plot the scatterpies with using the 'RColorbrewer' palettes
+cols <- colorRampPalette(brewer.pal(12, "Paired"))(length(habitat.broad.points[grep("broad", names(habitat.broad.points))])) # Expand the palette to the length of your unique habitat classes
+
+# Create the plot
+pie.chart <- leaflet() %>% # Create a leaflet plot
+  addTiles() %>% # Add the Open Street Map base layer
+  addProviderTiles('Esri.WorldImagery', group = "World Imagery") %>% # Add ESRI satellite imagery as a base layer
+  addLayersControl(baseGroups = c("Open Street Map", "World Imagery"), 
+                   options = layersControlOptions(collapsed = FALSE)) %>% # Add controls to switch between layers
+  addMinicharts(habitat.broad.points$longitude, habitat.broad.points$latitude, # Add a spatial minichart using spatial information from the metadata
+                type = "pie", # Make it a spatial pie chart
+                colorPalette = cols, # Color using the RColorbrewer palette
+                chartdata = habitat.broad.points[grep("broad", names(habitat.broad.points))], # Select only columns starting with 'broad'
+                width = 20, transitionTime = 0) # Set the size and transition time of the points
+pie.chart # Display the plot
+
+# This plot uses spatial bubble plots to frequency of occurrence of each habitat class
+# The plot can be scrolled through and zoomed, and has 2 choices of base layer imagery
+
+# Change the class below for each habitat class
+hab.name <- 'broad.unconsolidated'
+
+# Filter the data for plotting
+overzero <-  broad.hab.plot %>% # Any sample with a value greater than zero
+  filter(biota %in% hab.name & num.points > 0) 
+
+equalzero <- broad.hab.plot %>% # Any sample with a value equal to zero
+  filter(biota %in% hab.name & num.points == 0)
+
+# Create the plot
+bubble.plot <- leaflet(data = broad.hab.plot) %>% # Create a leaflet plot
+  addTiles() %>% # Add the Open Street Map base layer
+  addProviderTiles('Esri.WorldImagery', group = "World Imagery") %>% # Add ESRI satellite imagery as a base layer
+  addLayersControl(baseGroups = c("Open Street Map", "World Imagery"), 
+                   options = layersControlOptions(collapsed = FALSE)) # Add controls to switch between layers 
+
+if (nrow(overzero)) { # Add spatial bubble plots if the data is greater than zero
+  bubble.plot <- bubble.plot %>%
+    addCircleMarkers(data = overzero, lat = ~ latitude, lng = ~ longitude, # Add the bubble plots
+                     radius = ~(num.points/4) + 3, # Scale the size of the point by the data value
+                     fillOpacity = 0.5, stroke = FALSE, label = ~as.character(sample)) # Format the points and add labels for sample code
+}
+if (nrow(equalzero)) { # Add spatial bubble plots if the data is equal to zero
+  bubble.plot <- bubble.plot %>%
+    addCircleMarkers(data = equalzero, lat = ~ latitude, lng = ~ longitude, # Add the bubble plots
+                     radius = 2, # Scale the points at a constant size 
+                     fillOpacity = 0.5, color = "white",stroke = FALSE, label = ~as.character(sample)) # Format the points and add labels for sample code
+}
+bubble.plot # Display the plot 

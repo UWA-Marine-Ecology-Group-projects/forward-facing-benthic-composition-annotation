@@ -359,35 +359,56 @@ write.csv(habitat.broad.percent,file=paste(tidy.dir, paste(study,"random-points_
 write.csv(habitat.detailed.percent,file=paste(tidy.dir,paste(study,"random-points_percent-cover_detailed.habitat.csv",sep = "_"), sep = "/"), row.names=FALSE)
 
 ### 7. Spatially visualise the data ----
-# Visualise the habitat data as an interactive scatterpie plot
+
 # This plot uses spatial pie charts to visualise the proportion of habitat classes in each sample
 # The plot can be scrolled through and zoomed, and has 2 choices of base layer imagery
+
 # Create a color palette to plot the scatterpies with using the 'RColorbrewer' palettes
-cols <- brewer.pal(length(habitat.broad.points[grep("broad", names(habitat.broad.points))]), "Accent") # Paired also looks ok
+cols <- colorRampPalette(brewer.pal(12, "Paired"))(length(habitat.broad.points[grep("broad", names(habitat.broad.points))])) # Expand the palette to the length of your unique habitat classes
 
 # Create the plot
-leaflet() %>% # Create a leaflet plot
+pie.chart <- leaflet() %>% # Create a leaflet plot
   addTiles() %>% # Add the Open Street Map base layer
   addProviderTiles('Esri.WorldImagery', group = "World Imagery") %>% # Add ESRI satellite imagery as a base layer
   addLayersControl(baseGroups = c("Open Street Map", "World Imagery"), 
-                   options = layersControlOptions(collapsed = FALSE)) %>%
+                   options = layersControlOptions(collapsed = FALSE)) %>% # Add controls to switch between layers
   addMinicharts(habitat.broad.points$longitude, habitat.broad.points$latitude, # Add a spatial minichart using spatial information from the metadata
                 type = "pie", # Make it a spatial pie chart
                 colorPalette = cols, # Color using the RColorbrewer palette
                 chartdata = habitat.broad.points[grep("broad", names(habitat.broad.points))], # Select only columns starting with 'broad'
                 width = 20, transitionTime = 0) # Set the size and transition time of the points
+pie.chart # Display the plot
 
-# Visualise the habitat data as a leaflet bubble plot
-# This plot visualises one habitat class at a time
-# Change the class as indicated below to visualise each class
+# This plot uses spatial bubble plots to frequency of occurrence of each habitat class
+# The plot can be scrolled through and zoomed, and has 2 choices of base layer imagery
+
+# Change the class below for each habitat class
+hab.name <- 'broad.unconsolidated'
+
+# Filter the data for plotting
+overzero <-  broad.hab.plot %>% # Any sample with a value greater than zero
+  filter(biota %in% hab.name & num.points > 0) 
+
+equalzero <- broad.hab.plot %>% # Any sample with a value equal to zero
+  filter(biota %in% hab.name & num.points == 0)
 
 # Create the plot
-leaflet() %>% # Create a leaflet plot
+bubble.plot <- leaflet(data = broad.hab.plot) %>% # Create a leaflet plot
   addTiles() %>% # Add the Open Street Map base layer
   addProviderTiles('Esri.WorldImagery', group = "World Imagery") %>% # Add ESRI satellite imagery as a base layer
   addLayersControl(baseGroups = c("Open Street Map", "World Imagery"), 
-                   options = layersControlOptions(collapsed = FALSE)) %>%
-  addMinicharts(habitat.broad.points$longitude, habitat.broad.points$latitude, # Add a spatial minichart using spatial information from the metadata
-                chartdata = habitat.broad.points$broad.unconsolidated, # Change here to visualise a different habitat class
-                width = 5 + habitat.broad.points$broad.unconsolidated, # Change here to visualise a different habitat class
-                transitionTime = 0, opacity = 0.5) # Set the transition time and the opacity of the points
+                   options = layersControlOptions(collapsed = FALSE)) # Add controls to switch between layers 
+
+if (nrow(overzero)) { # Add spatial bubble plots if the data is greater than zero
+  bubble.plot <- bubble.plot %>%
+    addCircleMarkers(data = overzero, lat = ~ latitude, lng = ~ longitude, # Add the bubble plots
+      radius = ~num.points + 3, # Scale the size of the point by the data value
+      fillOpacity = 0.5, stroke = FALSE, label = ~as.character(sample)) # Format the points and add labels for sample code
+}
+if (nrow(equalzero)) { # Add spatial bubble plots if the data is equal to zero
+  bubble.plot <- bubble.plot %>%
+    addCircleMarkers(data = equalzero, lat = ~ latitude, lng = ~ longitude, # Add the bubble plots
+      radius = 2, # Scale the points at a constant size 
+      fillOpacity = 0.5, color = "white",stroke = FALSE, label = ~as.character(sample)) # Format the points and add labels for sample code
+}
+bubble.plot # Display the plot 
