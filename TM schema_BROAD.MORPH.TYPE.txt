@@ -1,6 +1,6 @@
 BROAD	MORPHOLOGY	TYPE	RELIEF	CODE
 Ascidians			*	35000000
-Bryozoa	Bryozoa / Cnidaria Matrix		*	20000000
+Bryozoa / Cnidaria Matrix			*	
 Bryozoa			*	20000000
 Consolidated	Unknown		*	82001000
 Consolidated	Rock	Turf mat	*	82001002
