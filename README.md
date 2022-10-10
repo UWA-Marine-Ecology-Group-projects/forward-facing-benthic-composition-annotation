@@ -10,9 +10,9 @@ This github repository contains:
 * A [script](https://github.com/BrookeGibbons/forward-facing-habitat-annotation/blob/master/01_format-dot-point-measurements.R):
     * to check the exports from TransectMeasure against a metadata *.csv
     * to convert the raw TransectMeasure annotations into a tidy dataset.
-* Example [broad ](https://github.com/BrookeGibbons/forward-facing-habitat-annotation/blob/master/TM%20schema_BROAD%20ONLY.txt)schema file with only broad attributes
-* Example standard schema file with broad, morphology and type attributes
-* Example [detailed schema](https://github.com/BrookeGibbons/forward-facing-habitat-annotation/blob/master/TM%20schema_BROAD.MORPH.TYPE.txt) text file with broad, morphology, type and fine attributes
+* Example [broad ](https://github.com/UWA-Marine-Ecology-Group-projects/forward-facing-benthic-composition-annotation/blob/main/TM%20schema_BROAD.txt)schema file with only broad attributes
+* Example [standard ] (https://github.com/UWA-Marine-Ecology-Group-projects/forward-facing-benthic-composition-annotation/blob/main/TM%20schema_BROAD.MORPH.TYPE.txt) schema file with broad, morphology and type attributes
+* Example [detailed ](https://github.com/UWA-Marine-Ecology-Group-projects/forward-facing-benthic-composition-annotation/blob/main/TM%20schema_BROAD.MORPH.TYPE.FINE.txt) schema file with broad, morphology, type and fine attributes
 
 
 #### Standard Operating Procedure
