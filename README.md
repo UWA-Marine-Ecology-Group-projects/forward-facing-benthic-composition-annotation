@@ -11,7 +11,7 @@ This github repository contains:
     * to check the exports from TransectMeasure against a metadata *.csv
     * to convert the raw TransectMeasure annotations into a tidy dataset.
 * Example [broad ](https://github.com/UWA-Marine-Ecology-Group-projects/forward-facing-benthic-composition-annotation/blob/main/TM%20schema_BROAD.txt)schema file with only broad attributes
-* Example [standard ] (https://github.com/UWA-Marine-Ecology-Group-projects/forward-facing-benthic-composition-annotation/blob/main/TM%20schema_BROAD.MORPH.TYPE.txt) schema file with broad, morphology and type attributes
+* Example [standard ](https://github.com/UWA-Marine-Ecology-Group-projects/forward-facing-benthic-composition-annotation/blob/main/TM%20schema_BROAD.MORPH.TYPE.txt) schema file with broad, morphology and type attributes
 * Example [detailed ](https://github.com/UWA-Marine-Ecology-Group-projects/forward-facing-benthic-composition-annotation/blob/main/TM%20schema_BROAD.MORPH.TYPE.FINE.txt) schema file with broad, morphology, type and fine attributes
 
 
